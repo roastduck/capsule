@@ -1,0 +1,7 @@
+# Python bytecode
+*.pyc
+
+# Vim temporary files
+*~
+*.swp
+
