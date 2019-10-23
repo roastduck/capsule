@@ -37,6 +37,10 @@ var["o_poses"], var["o_activations"] = capsule(
         *map(lambda key: var[key], inputs),
         n, i_h, i_w, i_size, o_size, kernel_size, strides=2, iterations=3, pose_size=pose_size)
 s = capsule_schedule(var["o_poses"], var["o_activations"], iterations=3)
+
+varList = list(map(lambda key: var[key], inputs + outputs))
+if "--print-lower" in sys.argv[1:]:
+    print(tvm.lower(s, varList, simple_mode=True, name="run"))
 compute = tvm.build(s, list(map(lambda key: var[key], inputs + outputs)), target, name="run")
 
 ctx = tvm.context(target, 0)
@@ -46,7 +50,7 @@ for key in inputs:
 for key in outputs:
     data[key] = tvm.nd.array(np.zeros(shape[key], dtype="float32"), ctx)
 
-if "--get-source" in sys.argv[1:]:
+if "--print-source" in sys.argv[1:]:
     if target == "cuda" or target == "rocm" or target.startswith('opencl'):
         dev_module = compute.imported_modules[0]
         print("-----GPU code-----")
