@@ -127,7 +127,10 @@ class Capsule:
         zz = self.compute((n, o_h, o_w, kernel_size, kernel_size, i_size, o_size),
                 lambda nn, hh, ww, kx, ky, ci, co: tvm.log(o_activations[nn, hh, ww, co] + epsilon) + o_p[nn, hh, ww, kx, ky, ci, co],
                 name="e_step/it_%d/zz" % it)
+
         rr = topi.nn.softmax(zz)
+        self.tensors["e_step/it_%d/rr" % it] = rr
+
         return rr
 
     ''' @param poses: shape(n, i_h, i_w, i_size, pose_size, pose_size)
@@ -207,6 +210,10 @@ class CapsuleCUDA(Capsule):
         for it in range(iterations - 1):
             bind_first_2(self.find("e_step/it_%d/o_p" % it))
             bind_first_2(self.find("e_step/it_%d/zz" % it))
+            bind_first_2(self.find("e_step/it_%d/rr" % it))
+            bind_first_2(self.find("e_step/it_%d/rr" % it).op.input_tensors[0]) # exp
+            bind_first_2(self.find("e_step/it_%d/rr" % it).op.input_tensors[1]) # expsum
+            bind_first_2(self.find("e_step/it_%d/rr" % it).op.input_tensors[0].op.input_tensors[1]) # max_elem
 
         return s
 
